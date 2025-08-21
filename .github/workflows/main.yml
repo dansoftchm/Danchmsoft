@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dansoftchm</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header>
+        <h1>Welcome to Dansoftchm!</h1>
+        <p>Enter your name and take the initial test to unlock CHM 202 and CHM 210 test portals.</p>
+    </header>
+    <main>
+        <section id="name-input">
+            <h2>Enter Your Full Name</h2>
+            <form id="name-form">
+                <label for="full-name">Full Name:</label>
+                <input type="text" id="full-name" required>
+                <button type="submit">Proceed to Initial Test</button>
+            </form>
+        </section>
+        <section id="initial-test" style="display: none;">
+            <h2>Initial Test</h2>
+            <form id="initial-test-form">
+                <div class="question">
+                    <p>1. What is the atomic number of carbon?</p>
+                    <label><input type="radio" name="q1" value="A"> A) 6</label>
+                    <label><input type="radio" name="q1" value="B"> B) 8</label>
+                    <label><input type="radio" name="q1" value="C"> C) 12</label>
+                    <label><input type="radio" name="q1" value="D"> D) 14</label>
+                </div>
+                <div class="question">
+                    <p>2. What type of bond involves the sharing of electrons?</p>
+                    <label><input type="radio" name="q2" value="A"> A) Ionic</label>
+                    <label><input type="radio" name="q2" value="B"> B) Covalent</label>
+                    <label><input type="radio" name="q2" value="C"> C) Metallic</label>
+                    <label><input type="radio" name="q2" value="D"> D) Hydrogen</label>
+                </div>
+                <div class="question">
+                    <p>3. What is the molar mass of water (H₂O)?</p>
+                    <label><input type="radio" name="q3" value="A"> A) 16 g/mol</label>
+                    <label><input type="radio" name="q3" value="B"> B) 18 g/mol</label>
+                    <label><input type="radio" name="q3" value="C"> C) 20 g/mol</label>
+                    <label><input type="radio" name="q3" value="D"> D) 22 g/mol</label>
+                </div>
+                <div class="question">
+                    <p>4. Which gas is most abundant in Earth’s atmosphere?</p>
+                    <label><input type="radio" name="q4" value="A"> A) Oxygen</label>
+                    <label><input type="radio" name="q4" value="B"> B) Nitrogen</label>
+                    <label><input type="radio" name="q4" value="C"> C) Carbon dioxide</label>
+                    <label><input type="radio" name="q4" value="D"> D) Argon</label>
+                </div>
+                <div class="question">
+                    <p>5. What is the charge of a proton?</p>
+                    <label><input type="radio" name="q5" value="A"> A) +1</label>
+                    <label><input type="radio" name="q5" value="B"> B) -1</label>
+                    <label><input type="radio" name="q5" value="C"> C) 0</label>
+                    <label><input type="radio" name="q5" value="D"> D) +2</label>
+                </div>
+                <button type="submit">Submit Initial Test</button>
+            </form>
+        </section>
+        <section id="test-selection" style="display: none;">
+            <h2>Select a Test</h2>
+            <button onclick="showTest('chm202')">CHM 202 Test</button>
+            <button onclick="showTest('chm210')">CHM 210 Test</button>
+        </section>
+        <section id="chm202-test" style="display: none;">
+            <h2>CHM 202 Test</h2>
+            <form id="chm202-test-form">
+                <div class="question">
+                    <p>1. Which of the following molecules has a C₂ᵥ point group?</p>
+                    <label><input type="radio" name="q1" value="A"> A) BF₃</label>
+                    <label><input type="radio" name="q1" value="B"> B) H₂O</label>
+                    <label><input type="radio" name="q1" value="C"> C) CH₄</label>
+                    <label><input type="radio" name="q1" value="D"> D) SF₆</label>
+                </div>
+                <div class="question">
+                    <p>2. How many symmetry elements does benzene (C₆H₆) possess?</p>
+                    <label><input type="radio" name="q2" value="A"> A) 12</label>
+                    <label><input type="radio" name="q2" value="B"> B) 24</label>
+                    <label><input type="radio" name="q2" value="C"> C) 18</label>
+                    <label><input type="radio" name="q2" value="D"> D) 6</label>
+                </div>
+                <!-- Add remaining 48 CHM 202 questions (omitted for brevity, can be expanded) -->
+                <button type="submit">Submit CHM 202 Test</button>
+            </form>
+        </section>
+        <section id="chm210-test" style="display: none;">
+            <h2>CHM 210 Test</h2>
+            <form id="chm210-test-form">
+                <div class="question">
+                    <p>1. What is the primary source of energy in UV-Vis spectroscopy?</p>
+                    <label
