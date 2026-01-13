@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CHM 201 Examination Portal</title>
+    <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #f4f7f9; margin: 0; padding: 20px; color: #333; }
+        .container { max-width: 800px; margin: auto; background: white; padding: 40px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .header { text-align: center; border-bottom: 2px solid #eee; padding-bottom: 20px; margin-bottom: 30px; }
+        .instructor-img { width: 110px; height: 110px; border-radius: 50%; object-fit: cover; border: 3px solid #007bff; margin-bottom: 15px; }
+        .hidden { display: none; }
+        .question-block { margin-bottom: 25px; padding: 20px; border-radius: 5px; background: #fafafa; border: 1px solid #efefef; }
+        .timer { position: fixed; top: 20px; right: 20px; background: #d9534f; color: white; padding: 12px 25px; border-radius: 5px; font-weight: bold; font-size: 1.2rem; z-index: 1000; }
+        .btn { width: 100%; padding: 15px; border: none; border-radius: 5px; cursor: pointer; font-size: 1.1rem; font-weight: bold; transition: 0.3s; }
+        .btn-access { background-color: #007bff; color: white; }
+        .btn-access:hover { background-color: #0056b3; }
+        .btn-submit { background-color: #28a745; color: white; margin-top: 20px; }
+        input { width: 100%; padding: 12px; margin: 10px 0 25px 0; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; font-size: 1rem; }
+        label { font-weight: 600; color: #555; }
+        .option-label { display: block; margin: 12px 0; cursor: pointer; padding: 8px; border-radius: 4px; transition: background 0.2s; }
+        .option-label:hover { background: #e9ecef; }
+    </style>
+</head>
+<body>
+
+<div id="login-page" class="container">
+    <div class="header">
+        <img src="https://i.ibb.co/Lz00N3K/1000482729.jpg" class="instructor-img">
+        <h2 style="margin: 0; color: #2c3e50;">CHM 201 Examination Portal</h2>
+        <p style="margin: 5px 0;">Course Instructor: Daniel Leonard</p>
+    </div>
+    
+    <div style="max-width: 450px; margin: auto;">
+        <label>Full Student Name</label>
+        <input type="text" id="studentName" placeholder="e.g. John Doe">
+        
+        <label>Portal Access Code</label>
+        <input type="password" id="accessCode" placeholder="Enter Access Code">
+        
+        <button class="btn btn-access" onclick="handleAccess()">GAIN ACCESS</button>
+        
+        <p onclick="adminLogin()" style="text-align: center; color: #ccc; font-size: 0.7rem; margin-top: 50px; cursor: pointer;">System Administration</p>
+    </div>
+</div>
+
+<div id="exam-page" class="container hidden">
+    <div class="timer" id="time-display">15:00</div>
+    <div class="header">
+        <h3 style="margin: 0;">CHM 201: Organic & Inorganic Chemistry</h3>
+        <p>Student: <span id="display-name" style="color: #007bff;"></span></p>
+    </div>
+    
+    <div id="questions-container"></div>
+    
+    <button class="btn btn-submit" onclick="submitExam()">SUBMIT EXAMINATION</button>
+</div>
+
+<div id="admin-page" class="container hidden">
+    <h2>Instructor Records - CHM 201</h2>
+    <div id="results-list"></div>
+    <button class="btn btn-access" onclick="location.reload()">Back to Portal</button>
+</div>
+
+<script>
+    const questions = [
+        { q: "Which boron compound is used as a mild antiseptic?", o: ["Borax", "Boric acid", "Boron oxide", "Brown boron"], a: "Boric acid" },
+        { q: "Graphite is a good electrical conductor because of:", o: ["Rigid 3-D framework", "Delocalized π-electrons", "sp³ hybridization", "High density"], a: "Delocalized π-electrons" },
+        { q: "The most abundant metal in the Earth’s crust is:", o: ["Iron", "Silicon", "Aluminium", "Calcium"], a: "Aluminium" },
+        { q: "What is the dominant oxidation state of most Group 14 elements?", o: ["+2", "+3", "+4", "+6"], a: "+4" },
+        { q: "Which halide of Group 14 is ionic?", o: ["SnCl₄", "PbCl₄", "SnF₄", "CCl₄"], a: "SnF₄" },
+        { q: "Boron shows a diagonal relationship with:", o: ["Aluminium", "Carbon", "Silicon", "Beryllium"], a: "Silicon" },
+        { q: "Which carbon allotrope is the hardest natural substance?", o: ["Graphite", "Buckminsterfullerene", "Diamond", "Nanotubes"], a: "Diamond" },
+        { q: "Acidification of borax with concentrated sulphuric acid gives:", o: ["Boric acid and boron oxide", "Boric oxide and boric acid", "Boron oxide and boric acid", "Boric acid and boric oxide"], a: "Boric acid and boric oxide" },
+        { q: "The donor atom of a ligand in coordination chemistry is:", o: ["A Lewis acid", "The counter-ion", "The central metal atom", "The atom that donates an electron pair"], a: "The atom that donates an electron pair" },
+        { q: "Which element makes up about 26% of the Earth’s crust by mass?", o: ["Carbon", "Oxygen", "Silicon", "Aluminium"], a: "Silicon" },
+        { q: "Borosilicate glass resists thermal shock due to its:", o: ["High density", "Low thermal expansion from strong B–O bonds", "Metallic character", "Lead content"], a: "Low thermal expansion from strong B–O bonds" },
+        { q: "Which Group 14 element is a metalloid?", o: ["Carbon", "Silicon", "Germanium", "Tin"], a: "Germanium" },
+        { q: "Zinc helps the body to:", o: ["Metabolise amino acids", "Make proteins and DNA", "Balance fluid", "All of the above"], a: "All of the above" },
+        { q: "Cassiterite is the natural form of:", o: ["PbO₂", "SiO₂", "GeO₂", "SnO₂"], a: "SnO₂" },
+        { q: "The compound known as “inorganic benzene” is:", o: ["Borazine", "Ammonia borane", "Boron nitride", "Diborane"], a: "Borazine" },
+        { q: "The use of lead in ammunition is due to its:", o: ["Malleability", "High density", "Ionizing power", "All of the above"], a: "All of the above" },
+        { q: "Boron reacts with most non-metals except:", o: ["Chlorine", "Nitrogen", "Hydrogen", "Oxygen"], a: "Hydrogen" },
+        { q: "The common oxidation state of Group 13 elements is:", o: ["+1", "+2", "+3", "+4"], a: "+3" },
+        { q: "Coordination chemistry deals with compounds containing:", o: ["Hydrogen bonds", "Coordinate bonds", "Covalent bonds", "Weak cohesive bonds"], a: "Coordinate bonds" },
+        { q: "Diborane is electron-deficient because it contains:", o: ["No covalent bonds", "Three-centre two-electron bonds", "Ionic bonds", "Metallic bonds"], a: "Three-centre two-electron bonds" },
+        { q: "The role of ammonia in the oxidation of cobalt(II) chloride is:", o: ["Oxidizing agent", "Catalyst", "Reducing agent", "Ligand"], a: "Ligand" },
+        { q: "Which property does NOT distinguish diamond from graphite?", o: ["Diamond is an electrical insulator", "Diamond is the hardest natural substance", "Graphite is used as a lubricant", "Diamond is a crystalline allotrope"], a: "Diamond is a crystalline allotrope" },
+        { q: "Which element is used for making glass?", o: ["Boron", "Silicon", "Lead", "All of the above"], a: "All of the above" },
+        { q: "Boron clusters with the formula [BₙHₙ]²⁻ are called:", o: ["Nido", "Arachno", "Closo", "Metalloboranes"], a: "Closo" },
+        { q: "Which Group 14 element has the highest melting point?", o: ["Silicon", "Germanium", "Carbon", "Lead"], a: "Carbon" },
+        { q: "Which boron compound is used as a bleach in laundry powders?", o: ["Boric acid", "Sodium perborate", "Borax", "Boron trifluoride"], a: "Sodium perborate" },
+        { q: "Which set of people are most likely to suffer from calcium deficiency?", o: ["Lazy", "Obese", "Slim", "Lanky"], a: "Lazy" },
+        { q: "Lead primarily shows the +2 oxidation state due to the:", o: ["Shielding effect", "Inert-pair effect", "Electronegativity", "Lanthanide contraction"], a: "Inert-pair effect" },
+        { q: "Which of the following is an anionic complex?", o: ["[Ni(H₂O)₆]²⁺", "[Cu(CN)₄]²⁻", "Ni(CO)₄", "[Ni(NH₃)₆]²⁺"], a: "[Cu(CN)₄]²⁻" },
+        { q: "The systematic name of B₂H₆ is:", o: ["Borane(4)", "Diborane(6)", "Diborane(4)", "Tetraborane(10)"], a: "Diborane(6)" },
+        { q: "Which compound is used as a fungicide and biocide?", o: ["Lead oxide", "Trialkyltin compounds", "Silicon carbide", "Stannane"], a: "Trialkyltin compounds" },
+        { q: "Which food source is richest in iron?", o: ["Yogurt and cheese", "Red meat and cooked soybeans", "Almonds and spinach", "Bananas and raisins"], a: "Red meat and cooked soybeans" },
+        { q: "The number of donor atoms bonded to a central metal ion is the:", o: ["Oxidation number", "Coordination number", "Denticity", "Valency"], a: "Coordination number" },
+        { q: "Carbon nanotubes are made up of:", o: ["Diamond sheets", "Graphene sheets", "Boron nitride", "Silica"], a: "Graphene sheets" },
+        { q: "Which element makes bronze when alloyed with copper?", o: ["Lead", "Silicon", "Tin", "Boron"], a: "Tin" },
+        { q: "Yogurt, cheese, milk, tofu, sardines and salmon are rich in:", o: ["Calcium", "Copper", "Zinc", "Magnesium"], a: "Calcium" },
+        { q: "Which mineral source is rich in boron?", o: ["Bauxite", "Borax", "Cassiterite", "Mica"], a: "Borax" },
+        { q: "The hydride PbH₄ is called:", o: ["Plumbane", "Stannane", "Germane", "Silane"], a: "Plumbane" },
+        { q: "Which ligand is hexadentate?", o: ["Ethylenediamine", "EDTA", "Terpyridine", "Ammonia"], a: "EDTA" },
+        { q: "The valence electronic configuration of Group 13 elements is:", o: ["ns²np³", "ns²np¹", "ns¹np³", "ns³np³"], a: "ns²np¹" },
+        { q: "Iron deficiency in humans can result in:", o: ["Goitre", "Anaemia", "Heart disease", "Growth retardation"], a: "Anaemia" },
+        { q: "Which metal is primarily responsible for oxygen transport in haemoglobin?", o: ["Copper", "Zinc", "Iron", "Manganese"], a: "Iron" },
+        { q: "Growth retardation in humans is mainly caused by deficiency of:", o: ["Iron", "Copper", "Zinc", "Calcium"], a: "Zinc" },
+        { q: "Which metal helps to maintain normal blood sugar levels?", o: ["Chromium", "Sodium", "Potassium", "Magnesium"], a: "Chromium" },
+        { q: "All the following are major minerals EXCEPT:", o: ["Calcium", "Magnesium", "Potassium", "Iron"], a: "Iron" },
+        { q: "The recommended daily intake of calcium for women aged 51 years and above is:", o: ["800 mg", "1,000 mg", "1,200 mg", "1,500 mg"], a: "1,200 mg" },
+        { q: "Which metal activates enzymes that detoxify harmful sulfites in the body?", o: ["Molybdenum", "Manganese", "Copper", "Chromium"], a: "Molybdenum" },
+        { q: "Heart disease in infants is commonly associated with deficiency of:", o: ["Iron", "Zinc", "Copper", "Magnesium"], a: "Copper" },
+        { q: "Which of the following food sources is richest in iron?", o: ["Yogurt and cheese", "Red meat and cooked soybeans", "Almonds and spinach", "Bananas and raisins"], a: "Red meat and cooked soybeans" },
+        { q: "Which set of people are likely to suffer from calcium deficiency?", o: ["Lazy", "Obese", "Slim", "Lanky"], a: "Lazy" },
+        { q: "The major raw material for making glass is:", o: ["Boron", "Silicon", "Silica", "Aluminium"], a: "Silica" },
+        { q: "All the following minerals contain aluminium and silicon together EXCEPT:", o: ["Sand", "Clays", "Feldspar", "Micas"], a: "Sand" },
+        { q: "Which Group 14 element has the highest melting point?", o: ["Silicon", "Germanium", "Carbon", "Lead"], a: "Carbon" },
+        { q: "Carbon and silicon are described as oxophiles because they have affinity for:", o: ["Fluoride", "Hydrogen", "Oxide", "Sulphide"], a: "Oxide" },
+        { q: "The 1996 Nobel Prize was awarded for the discovery of:", o: ["Diamond", "Graphite", "Buckminsterfullerene", "Carbon black"], a: "Buckminsterfullerene" },
+        { q: "In diamond, carbon atoms are arranged in a:", o: ["Planar structure", "Regular tetrahedral geometry", "Octahedral structure", "Icosahedral structure"], a: "Regular tetrahedral geometry" },
+        { q: "The lead halide PbCl₄ decomposes at room temperature to form:", o: ["Pb and Cl₂", "PbCl₂ and Cl₂", "PbO and HCl", "PbH₄"], a: "PbCl₂ and Cl₂" },
+        { q: "Which of the following halides is an ionic solid?", o: ["SnCl₄", "PbCl₄", "SnF₄", "CCl₄"], a: "SnF₄" },
+        { q: "Which element in Group 14 is the major raw material for making glass?", o: ["Carbon", "Silicon", "Germanium", "Lead"], a: "Silicon" },
+        { q: "Which of the following does NOT distinguish diamond from graphite?", o: ["Diamond is an insulator", "Diamond is very hard", "Graphite is a lubricant", "Diamond is crystalline"], a: "Diamond is crystalline" },
+        { q: "What is the dominant oxidation state of Group 14 elements?", o: ["+2", "+3", "+4", "+6"], a: "+4" },
+        { q: "The most common oxidation state of thallium is:", o: ["+1", "+3", "+5", "0"], a: "+1" },
+        { q: "Which of the following is a monodentate ligand?", o: ["NH₃", "H₂NC₂H₄NH₂", "EDTA", "Oxalate"], a: "NH₃" },
+        { q: "Who is regarded as the father of coordination chemistry?", o: ["Alfred Stock", "Alfred Werner", "Harold Kroto", "Richard Smalley"], a: "Alfred Werner" },
+        { q: "The number of ionisable chloride ions in [Co(NH₃)₆]Cl₃ is:", o: ["0", "1", "2", "3"], a: "3" },
+        { q: "Werner determined the ionisation of coordination compounds using:", o: ["X-ray diffraction", "Magnetic susceptibility", "Molar conductivity", "Electron diffraction"], a: "Molar conductivity" },
+        { q: "A ligand that donates and also accepts electrons forms:", o: ["Classical complexes", "Non-classical complexes", "Simple salts", "Molecular solids"], a: "Non-classical complexes" },
+        { q: "Complexes formed with multidentate ligands are called:", o: ["Adducts", "Polymers", "Chelates", "Isomers"], a: "Chelates" },
+        { q: "The number of donor atoms attached to a central metal ion is called:", o: ["Oxidation number", "Coordination number", "Denticity", "Valency"], a: "Coordination number" },
+        { q: "Which of the following is a hexadentate ligand?", o: ["Ethylenediamine", "EDTA", "Terpyridine", "Ammonia"], a: "EDTA" }
+    ];
+
+    let timer;
+    let timeRemaining = 900; 
+
+    function handleAccess() {
+        const student = document.getElementById('studentName').value;
+        const code = document.getElementById('accessCode').value;
+
+        if(!student) { alert("Please enter your name."); return; }
+        if(code !== "2026") { alert("Invalid Access Code."); return; }
+
+        document.getElementById('display-name').innerText = student;
+        document.getElementById('login-page').classList.add('hidden');
+        document.getElementById('exam-page').classList.remove('hidden');
+
+        renderQuestions();
+        startTimer();
+    }
+
+    function renderQuestions() {
+        const container = document.getElementById('questions-container');
+        questions.forEach((qObj, i) => {
+            const div = document.createElement('div');
+            div.className = 'question-block';
+            let html = `<p><strong>${i+1}. ${qObj.q}</strong></p>`;
+            qObj.o.forEach(opt => {
+                html += `<label class="option-label"><input type="radio" name="q${i}" value="${opt}"> ${opt}</label>`;
+            });
+            div.innerHTML = html;
+            container.appendChild(div);
+        });
+    }
+
+    function startTimer() {
+        timer = setInterval(() => {
+            timeRemaining--;
+            let mins = Math.floor(timeRemaining / 60);
+            let secs = timeRemaining % 60;
+            document.getElementById('time-display').innerText = `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+            if(timeRemaining <= 0) { submitExam(); }
+        }, 1000);
+    }
+
+    function submitExam() {
+        clearInterval(timer);
+        const name = document.getElementById('studentName').value;
+        let score = 0;
+        questions.forEach((qObj, i) => {
+            const selected = document.querySelector(`input[name="q${i}"]:checked`);
+            if(selected && selected.value === qObj.a) score++;
+        });
+
+        const result = { name, score, total: questions.length, date: new Date().toLocaleString() };
+        let storage = JSON.parse(localStorage.getItem('CHM201_Submissions')) || [];
+        storage.push(result);
+        localStorage.setItem('CHM201_Submissions', JSON.stringify(storage));
+
+        alert("Examination Submitted. Thank you.");
+        location.reload();
+    }
+
+    function adminLogin() {
+        const pass = prompt("Enter Admin Password:");
+        if(pass === "DANIEL201") {
+            document.getElementById('login-page').classList.add('hidden');
+            document.getElementById('admin-page').classList.remove('hidden');
+            const logs = JSON.parse(localStorage.getItem('CHM201_Submissions')) || [];
+            document.getElementById('results-list').innerHTML = logs.map(r => `
+                <div style="background: #eee; padding: 15px; margin: 10px 0; border-radius: 5px;">
+                    <strong>${r.name}</strong> — Score: ${r.score}/${r.total} <br>
+                    <small>${r.date}</small>
+                </div>
+            `).join('') || "No records found.";
+        }
+    }
+</script>
+
+</body>
+</html>
