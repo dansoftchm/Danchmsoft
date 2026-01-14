@@ -1,0 +1,352 @@
+# This workflow will build a Node.js project and deploy it to an Azure Functions App on Windows or Linux when a commit is pushed to your default branch.
+#<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CHM 201 Examination Portal | Daniel Leonard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --brand-blue: #004a99;
+            --light-blue: #e6f0ff;
+            --success: #28a745;
+            --danger: #dc3545;
+            --white: #ffffff;
+            --text: #333333;
+        }
+
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: #f0f2f5; color: var(--text); margin: 0; font-size: 14px; scroll-behavior: smooth; }
+
+        /* Landing Page - Visible by default */
+        #landing-page { 
+            display: flex; flex-direction: column; align-items: center; justify-content: center; 
+            height: 100vh; text-align: center; background-color: var(--brand-blue); color: white;
+            position: fixed; width: 100%; top: 0; left: 0; z-index: 2000;
+        }
+        .start-btn { 
+            background: var(--white); color: var(--brand-blue); border: none; padding: 14px 40px; 
+            font-size: 1.1rem; font-weight: bold; border-radius: 4px; cursor: pointer; transition: 0.3s; margin-top: 25px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        .start-btn:hover { background: var(--light-blue); transform: scale(1.05); }
+
+        /* Quiz Interface - Hidden by default */
+        #quiz-container { display: none; max-width: 850px; margin: 0 auto; padding-bottom: 50px; }
+        
+        .nav-bar { 
+            position: sticky; top: 0; background: var(--brand-blue); color: white; padding: 10px 20px; 
+            display: flex; justify-content: space-between; align-items: center; z-index: 1000; box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        .timer-box { background: rgba(255,255,255,0.2); padding: 6px 15px; border-radius: 4px; font-weight: bold; border: 1px solid white; font-size: 1.1rem; }
+
+        .question-card { background: var(--white); padding: 18px; border-radius: 4px; margin-top: 15px; border: 1px solid #dee2e6; }
+        .q-text { font-size: 14px; font-weight: 600; margin-bottom: 12px; display: block; color: var(--brand-blue); }
+        
+        .option { 
+            display: block; padding: 10px 15px; border: 1px solid #eee; 
+            border-radius: 4px; margin-bottom: 8px; cursor: pointer; font-size: 13px; transition: 0.2s;
+        }
+        .option:hover { background: var(--light-blue); border-color: var(--brand-blue); }
+        input[type="radio"] { margin-right: 12px; cursor: pointer; }
+
+        /* Results Area - Hidden by default */
+        #results-area { display: none; max-width: 850px; margin: 20px auto; padding: 20px; text-align: center; }
+        .score-summary { background: var(--white); border-top: 5px solid var(--brand-blue); padding: 25px; border-radius: 4px; margin-bottom: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        
+        .correct { border-left: 6px solid var(--success) !important; background: #f8fff9; }
+        .wrong { border-left: 6px solid var(--danger) !important; background: #fff8f8; }
+        .ans-label { color: var(--success); font-weight: bold; font-size: 12px; display: block; margin-top: 10px; padding: 5px; background: #e9f7ef; border-radius: 3px; }
+
+        .submit-btn { background: var(--brand-blue); color: white; border: none; padding: 15px; border-radius: 4px; font-weight: bold; cursor: pointer; margin: 40px 0; width: 100%; font-size: 1rem; }
+        .submit-btn:hover { background: #003366; }
+    </style>
+</head>
+<body>
+
+<div id="landing-page">
+    <h3 style="font-weight: 400; letter-spacing: 1px; margin-bottom: 0;">TAKE A TEST ON</h3>
+    <h1 style="font-size: 2.8rem; margin: 10px 0;">CHM 201 (Inorganic Chemistry)</h1>
+    <p style="font-size: 1.2rem; opacity: 0.9;">Course Instructor: <strong>Daniel Leonard</strong></p>
+    
+    <div style="background: rgba(255,255,255,0.1); padding: 20px; border-radius: 8px; margin-top: 15px; border: 1px dashed rgba(255,255,255,0.5);">
+        <p style="margin: 5px 0;">Total Questions: <strong>70</strong></p>
+        <p style="margin: 5px 0;">Time Allowed: <strong>10 Minutes</strong></p>
+    </div>
+    
+    <button class="start-btn" onclick="startTest()">BEGIN EXAMINATION</button>
+</div>
+
+<div id="quiz-container">
+    <div class="nav-bar">
+        <div>
+            <strong style="font-size: 1.1rem;">CHM 201 Examination</strong><br>
+            <small>Instructor: Daniel Leonard</small>
+        </div>
+        <div class="timer-box" id="timer">10:00</div>
+    </div>
+
+    <form id="quizForm">
+        <div id="questions-wrapper">
+            </div>
+        <button type="button" class="submit-btn" onclick="confirmSubmission()">SUBMIT SCRIPT</button>
+    </form>
+</div>
+
+<div id="results-area">
+    <div class="score-summary">
+        <h2 style="color: var(--brand-blue); margin-top: 0;">Examination Finished</h2>
+        <p id="final-score" style="font-size: 1.5rem; color: var(--text);"></p>
+        <p style="color: #666;">Scroll down to review the correct answers for all 70 questions.</p>
+        <button onclick="window.print()" style="padding: 8px 20px; cursor: pointer;">Print Result (PDF)</button>
+    </div>
+    <div id="review-container" style="text-align: left;">
+        </div>
+</div>
+
+<script>
+    // FULL QUESTION DATABASE
+    const questions = [
+        { q: "Which boron compound is used as a mild antiseptic?", options: ["Borax", "Boric acid", "Boron oxide", "Brown boron"], correct: "B" },
+        { q: "Graphite is a good electrical conductor because of:", options: ["Rigid 3-D framework", "Delocalized π-electrons", "sp³ hybridization", "High density"], correct: "B" },
+        { q: "The most abundant metal in the Earth’s crust is:", options: ["Iron", "Silicon", "Aluminium", "Calcium"], correct: "C" },
+        { q: "What is the dominant oxidation state of most Group 14 elements?", options: ["+2", "+3", "+4", "+6"], correct: "C" },
+        { q: "Which halide of Group 14 is ionic?", options: ["SnCl₄", "PbCl₄", "SnF₄", "CCl₄"], correct: "C" },
+        { q: "Boron shows a diagonal relationship with:", options: ["Aluminium", "Carbon", "Silicon", "Beryllium"], correct: "C" },
+        { q: "Which carbon allotrope is the hardest natural substance?", options: ["Graphite", "Buckminsterfullerene", "Diamond", "Nanotubes"], correct: "C" },
+        { q: "Acidification of borax with concentrated sulphuric acid gives:", options: ["Boric acid and boron oxide", "Boric oxide and boric acid", "Boron oxide and boric acid", "Boric acid and boric oxide"], correct: "A" },
+        { q: "The donor atom of a ligand in coordination chemistry is:", options: ["A Lewis acid", "The counter-ion", "The central metal atom", "The atom that donates an electron pair"], correct: "D" },
+        { q: "Which element makes up about 26% of the Earth’s crust by mass?", options: ["Carbon", "Oxygen", "Silicon", "Aluminium"], correct: "C" },
+        { q: "Borosilicate glass resists thermal shock due to its:", options: ["High density", "Low thermal expansion from strong B–O bonds", "Metallic character", "Lead content"], correct: "B" },
+        { q: "Which Group 14 element is a metalloid?", options: ["Carbon", "Silicon", "Germanium", "Tin"], correct: "C" },
+        { q: "Zinc helps the body to:", options: ["Metabolise amino acids", "Make proteins and DNA", "Balance fluid", "All of the above"], correct: "B" },
+        { q: "Cassiterite is the natural form of:", options: ["PbO₂", "SiO₂", "GeO₂", "SnO₂"], correct: "D" },
+        { q: "The compound known as “inorganic benzene” is:", options: ["Borazine", "Ammonia borane", "Boron nitride", "Diborane"], correct: "A" },
+        { q: "The use of lead in ammunition is due to its:", options: ["Malleability", "High density", "Ionizing power", "All of the above"], correct: "B" },
+        { q: "Boron reacts with most non-metals except:", options: ["Chlorine", "Nitrogen", "Hydrogen", "Oxygen"], correct: "C" },
+        { q: "The common oxidation state of Group 13 elements is:", options: ["+1", "+2", "+3", "+4"], correct: "C" },
+        { q: "Coordination chemistry deals with compounds containing:", options: ["Hydrogen bonds", "Coordinate bonds", "Covalent bonds", "Weak cohesive bonds"], correct: "B" },
+        { q: "Diborane is electron-deficient because it contains:", options: ["No covalent bonds", "Three-centre two-electron bonds", "Ionic bonds", "Metallic bonds"], correct: "B" },
+        { q: "The role of ammonia in the oxidation of cobalt(II) chloride is:", options: ["Oxidizing agent", "Catalyst", "Reducing agent", "Ligand"], correct: "D" },
+        { q: "Which property does NOT distinguish diamond from graphite?", options: ["Diamond is an electrical insulator", "Diamond is the hardest natural substance", "Graphite is used as a lubricant", "Diamond is a crystalline allotrope"], correct: "D" },
+        { q: "Which element is used for making glass?", options: ["Boron", "Silicon", "Lead", "All of the above"], correct: "D" },
+        { q: "Boron clusters with the formula [BₙHₙ]²⁻ are called:", options: ["Nido", "Arachno", "Closo", "Metalloboranes"], correct: "C" },
+        { q: "Which Group 14 element has the highest melting point?", options: ["Silicon", "Germanium", "Carbon", "Lead"], correct: "C" },
+        { q: "Which boron compound is used as a bleach in laundry powders?", options: ["Boric acid", "Sodium perborate", "Borax", "Boron trifluoride"], correct: "B" },
+        { q: "Which set of people are most likely to suffer from calcium deficiency?", options: ["Lazy", "Obese", "Slim", "Lanky"], correct: "B" },
+        { q: "Lead primarily shows the +2 oxidation state due to the:", options: ["Shielding effect", "Inert-pair effect", "Electronegativity", "Lanthanide contraction"], correct: "B" },
+        { q: "Which of the following is an anionic complex?", options: ["[Ni(H₂O)₆]²⁺", "[Cu(CN)₄]²⁻", "Ni(CO)₄", "[Ni(NH₃)₆]²⁺"], correct: "B" },
+        { q: "The systematic name of B₂H₆ is:", options: ["Borane(4)", "Diborane(6)", "Diborane(4)", "Tetraborane(10)"], correct: "B" },
+        { q: "Which compound is used as a fungicide and biocide?", options: ["Lead oxide", "Trialkyltin compounds", "Silicon carbide", "Stannane"], correct: "B" },
+        { q: "Which food source is richest in iron?", options: ["Yogurt and cheese", "Red meat and cooked soybeans", "Almonds and spinach", "Bananas and raisins"], correct: "B" },
+        { q: "The number of donor atoms bonded to a central metal ion is the:", options: ["Oxidation number", "Coordination number", "Denticity", "Valency"], correct: "B" },
+        { q: "Carbon nanotubes are made up of:", options: ["Diamond sheets", "Graphene sheets", "Boron nitride", "Silica"], correct: "B" },
+        { q: "Which element makes bronze when alloyed with copper?", options: ["Lead", "Silicon", "Tin", "Boron"], correct: "C" },
+        { q: "Yogurt, cheese, milk, tofu, sardines and salmon are rich in:", options: ["Calcium", "Copper", "Zinc", "Magnesium"], correct: "A" },
+        { q: "Which mineral source is rich in boron?", options: ["Bauxite", "Borax", "Cassiterite", "Mica"], correct: "B" },
+        { q: "The hydride PbH₄ is called:", options: ["Plumbane", "Stannane", "Germane", "Silane"], correct: "A" },
+        { q: "Which ligand is hexadentate?", options: ["Ethylenediamine", "EDTA", "Terpyridine", "Ammonia"], correct: "B" },
+        { q: "The valence electronic configuration of Group 13 elements is:", options: ["ns²np³", "ns²np¹", "ns¹np³", "ns³np³"], correct: "B" },
+        { q: "Iron deficiency in humans can result in:", options: ["Goitre", "Anaemia", "Heart disease", "Growth retardation"], correct: "B" },
+        { q: "Which metal is primarily responsible for oxygen transport in haemoglobin?", options: ["Copper", "Zinc", "Iron", "Manganese"], correct: "C" },
+        { q: "Growth retardation in humans is mainly caused by deficiency of:", options: ["Iron", "Copper", "Zinc", "Calcium"], correct: "C" },
+        { q: "Which metal helps to maintain normal blood sugar levels?", options: ["Chromium", "Sodium", "Potassium", "Magnesium"], correct: "A" },
+        { q: "All the following are major minerals EXCEPT:", options: ["Calcium", "Magnesium", "Potassium", "Iron"], correct: "D" },
+        { q: "The recommended daily intake of calcium for women aged 51 years and above is:", options: ["800 mg", "1,000 mg", "1,200 mg", "1,500 mg"], correct: "C" },
+        { q: "Which metal activates enzymes that detoxify harmful sulfites in the body?", options: ["Molybdenum", "Manganese", "Copper", "Chromium"], correct: "A" },
+        { q: "Heart disease in infants is commonly associated with deficiency of:", options: ["Iron", "Zinc", "Copper", "Magnesium"], correct: "C" },
+        { q: "Which of the following food sources is richest in iron?", options: ["Yogurt and cheese", "Red meat and cooked soybeans", "Almonds and spinach", "Bananas and raisins"], correct: "B" },
+        { q: "Which set of people are likely to suffer from calcium deficiency?", options: ["Lazy", "Obese", "Slim", "Lanky"], correct: "B" },
+        { q: "The major raw material for making glass is:", options: ["Boron", "Silicon", "Silica", "Aluminium"], correct: "C" },
+        { q: "All the following minerals contain aluminium and silicon together EXCEPT:", options: ["Sand", "Clays", "Feldspar", "Micas"], correct: "A" },
+        { q: "Which Group 14 element has the highest melting point?", options: ["Silicon", "Germanium", "Carbon", "Lead"], correct: "C" },
+        { q: "Carbon and silicon are described as oxophiles because they have affinity for:", options: ["Fluoride", "Hydrogen", "Oxide", "Sulphide"], correct: "C" },
+        { q: "The 1996 Nobel Prize was awarded for the discovery of:", options: ["Diamond", "Graphite", "Buckminsterfullerene", "Carbon black"], correct: "C" },
+        { q: "In diamond, carbon atoms are arranged in a:", options: ["Planar structure", "Regular tetrahedral geometry", "Octahedral structure", "Icosahedral structure"], correct: "B" },
+        { q: "The lead halide PbCl₄ decomposes at room temperature to form:", options: ["Pb and Cl₂", "PbCl₂ and Cl₂", "PbO and HCl", "PbH₄"], correct: "B" },
+        { q: "Which of the following halides is an ionic solid?", options: ["SnCl₄", "PbCl₄", "SnF₄", "CCl₄"], correct: "C" },
+        { q: "Which element in Group 14 is the major raw material for making glass?", options: ["Carbon", "Silicon", "Germanium", "Lead"], correct: "B" },
+        { q: "Which of the following does NOT distinguish diamond from graphite?", options: ["Diamond is an insulator", "Diamond is very hard", "Graphite is a lubricant", "Diamond is crystalline"], correct: "D" },
+        { q: "What is the dominant oxidation state of Group 14 elements?", options: ["+2", "+3", "+4", "+6"], correct: "C" },
+        { q: "The most common oxidation state of thallium is:", options: ["+1", "+3", "+5", "0"], correct: "A" },
+        { q: "Which of the following is a monodentate ligand?", options: ["NH₃", "H₂NC₂H₄NH₂", "EDTA", "Oxalate"], correct: "A" },
+        { q: "Who is regarded as the father of coordination chemistry?", options: ["Alfred Stock", "Alfred Werner", "Harold Kroto", "Richard Smalley"], correct: "B" },
+        { q: "The number of ionisable chloride ions in [Co(NH₃)₆]Cl₃ is:", options: ["0", "1", "2", "3"], correct: "D" },
+        { q: "Werner determined the ionisation of coordination compounds using:", options: ["X-ray diffraction", "Magnetic susceptibility", "Molar conductivity", "Electron diffraction"], correct: "C" },
+        { q: "A ligand that donates and also accepts electrons forms:", options: ["Classical complexes", "Non-classical complexes", "Simple salts", "Molecular solids"], correct: "B" },
+        { q: "Complexes formed with multidentate ligands are called:", options: ["Adducts", "Polymers", "Chelates", "Isomers"], correct: "C" },
+        { q: "The number of donor atoms attached to a central metal ion is called:", options: ["Oxidation number", "Coordination number", "Denticity", "Valency"], correct: "B" },
+        { q: "Which of the following is a hexadentate ligand?", options: ["Ethylenediamine", "EDTA", "Terpyridine", "Ammonia"], correct: "B" }
+    ];
+
+    function startTest() {
+        // 1. Hide Landing Page
+        document.getElementById('landing-page').style.display = 'none';
+        
+        // 2. Show Quiz Container
+        document.getElementById('quiz-container').style.display = 'block';
+        
+        // 3. Immediately generate and show all questions
+        renderAllQuestions();
+        
+        // 4. Start the 10-minute countdown
+        beginTimer();
+        
+        // Scroll to top
+        window.scrollTo(0, 0);
+    }
+
+    function renderAllQuestions() {
+        const wrapper = document.getElementById('questions-wrapper');
+        wrapper.innerHTML = ""; // Clear wrapper
+        
+        questions.forEach((q, i) => {
+            const card = document.createElement('div');
+            card.className = 'question-card';
+            card.id = `q-card-${i}`;
+            
+            let optionsHtml = q.options.map((opt, idx) => {
+                const letter = String.fromCharCode(65 + idx);
+                return `
+                    <label class="option">
+                        <input type="radio" name="q${i}" value="${letter}">
+                        ${letter}. ${opt}
+                    </label>
+                `;
+            }).join('');
+
+            card.innerHTML = `
+                <span class="q-text">Question ${i + 1}: ${q.q}</span>
+                <div class="options">${optionsHtml}</div>
+            `;
+            wrapper.appendChild(card);
+        });
+    }
+
+    let timeLeft = 10 * 60;
+    function beginTimer() {
+        const display = document.getElementById('timer');
+        const countdown = setInterval(() => {
+            let minutes = Math.floor(timeLeft / 60);
+            let seconds = timeLeft % 60;
+            display.innerText = `${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+            
+            if (timeLeft <= 0) {
+                clearInterval(countdown);
+                autoSubmit();
+            }
+            timeLeft--;
+        }, 1000);
+    }
+
+    function confirmSubmission() {
+        if(confirm("Are you sure you want to submit your examination script?")) {
+            gradeTest();
+        }
+    }
+
+    function autoSubmit() {
+        alert("Time is up! Your script is being submitted automatically.");
+        gradeTest();
+    }
+
+    function gradeTest() {
+        let score = 0;
+        const form = document.getElementById('quizForm');
+        
+        questions.forEach((q, i) => {
+            const selected = form[`q${i}`].value;
+            const card = document.getElementById(`q-card-${i}`);
+            
+            if (selected === q.correct) {
+                score++;
+                card.classList.add('correct');
+            } else {
+                card.classList.add('wrong');
+                const correctLabel = document.createElement('span');
+                correctLabel.className = 'ans-label';
+                correctLabel.innerText = `Correct Answer: ${q.correct}`;
+                card.appendChild(correctLabel);
+            }
+        });
+
+        // Hide Test, Show Results
+        document.getElementById('quiz-container').style.display = 'none';
+        document.getElementById('results-area').style.display = 'block';
+        document.getElementById('final-score').innerText = `Total Score: ${score} / ${questions.length}`;
+        
+        // Move cards to results area for review
+        const wrapper = document.getElementById('questions-wrapper');
+        document.getElementById('review-container').appendChild(wrapper);
+        window.scrollTo(0, 0);
+    }
+</script>
+
+</body>
+</html>
+
+# This workflow assumes you have already created the target Azure Functions app.
+# For instructions see:
+#   - https://learn.microsoft.com/en-us/azure/azure-functions/create-first-function-vs-code-node
+#   - https://learn.microsoft.com/en-us/azure/azure-functions/create-first-function-vs-code-typescript
+#
+# To configure this workflow:
+# 1. Set up the following secrets in your repository:
+#   - AZURE_FUNCTIONAPP_PUBLISH_PROFILE
+# 2. Change env variables for your configuration.
+#
+# For more information on:
+#   - GitHub Actions for Azure: https://github.com/Azure/Actions
+#   - Azure Functions Action: https://github.com/Azure/functions-action
+#   - Publish Profile: https://github.com/Azure/functions-action#using-publish-profile-as-deployment-credential-recommended
+#   - Azure Service Principal for RBAC: https://github.com/Azure/functions-action#using-azure-service-principal-for-rbac-as-deployment-credential
+#
+# For more samples to get started with GitHub Action workflows to deploy to Azure: https://github.com/Azure/actions-workflow-samples/tree/master/FunctionApp
+
+name: Deploy Node.js project to Azure Function App
+
+on:
+  push:
+    branches: ["main"]
+
+env:
+  AZURE_FUNCTIONAPP_NAME: 'your-app-name'   # set this to your function app name on Azure
+  AZURE_FUNCTIONAPP_PACKAGE_PATH: '.'       # set this to the path to your function app project, defaults to the repository root
+  NODE_VERSION: '20.x'                      # set this to the node version to use (e.g. '8.x', '10.x', '12.x')
+
+jobs:
+  build-and-deploy:
+    runs-on: windows-latest # For Linux, use ubuntu-latest
+    environment: dev
+    steps:
+    - name: 'Checkout GitHub Action'
+      uses: actions/checkout@v4
+
+    # If you want to use Azure RBAC instead of Publish Profile, then uncomment the task below
+    # - name: 'Login via Azure CLI'
+    #   uses: azure/login@v1
+    #   with:
+    #     creds: ${{ secrets.AZURE_RBAC_CREDENTIALS }} # set up AZURE_RBAC_CREDENTIALS secrets in your repository
+
+    - name: Setup Node ${{ env.NODE_VERSION }} Environment
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+
+    - name: 'Resolve Project Dependencies Using Npm'
+      shell: pwsh # For Linux, use bash
+      run: |
+        pushd './${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}'
+        npm install
+        npm run build --if-present
+        npm run test --if-present
+        popd
+
+    - name: 'Run Azure Functions Action'
+      uses: Azure/functions-action@v1
+      id: fa
+      with:
+        app-name: ${{ env.AZURE_FUNCTIONAPP_NAME }}
+        package: ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
+        publish-profile: ${{ secrets.AZURE_FUNCTIONAPP_PUBLISH_PROFILE }} # Remove publish-profile to use Azure RBAC
